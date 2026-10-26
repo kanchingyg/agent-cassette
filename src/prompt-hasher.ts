@@ -16,15 +16,11 @@ const SECRET_PATTERNS = [
   /Bearer\s+[a-zA-Z0-9._-]+/gi,
   /api[_-]?key["\s:=]+["']?[a-zA-Z0-9._-]{8,}/gi,
 ];
-
-/** Executes `redactSecrets` to redact secrets in `agent-cassette`. */
 export function redactSecrets(text: string): string {
   let out = text;
   for (const re of SECRET_PATTERNS) out = out.replace(re, "[REDACTED]");
   return out;
 }
-
-/** Executes `canonicalizeJson` to canonicalize json in `agent-cassette`. */
 export function canonicalizeJson(value: unknown, stripEphemeral = true): string {
   if (value === null || value === undefined) return "null";
   if (typeof value !== "object") return JSON.stringify(value);
@@ -37,26 +33,18 @@ export function canonicalizeJson(value: unknown, stripEphemeral = true): string 
     .sort();
   return `{${keys.map((k) => `${JSON.stringify(k)}:${canonicalizeJson(obj[k], stripEphemeral)}`).join(",")}}`;
 }
-
-/** Executes `hashPrompt` to hash prompt in `agent-cassette`. */
 export function hashPrompt(body: unknown): string {
   return createHash("sha256").update(canonicalizeJson(body, true)).digest("hex");
 }
 
 export const TRUNC_MARKER = "[...TRUNCATED BY AGENT-CASSETTE...]";
-
-/** Executes `headTailTruncate` to head tail truncate in `agent-cassette`. */
 export function headTailTruncate(text: string, maxChars: number): string {
   if (text.length <= maxChars) return text;
   const headLen = Math.floor(maxChars * 0.6);
   const tailLen = Math.floor(maxChars * 0.4) - TRUNC_MARKER.length;
   return text.slice(0, headLen) + TRUNC_MARKER + text.slice(-tailLen);
 }
-
-/** Configuration and data shape for `DriftLine` (drift line). */
 export type DriftLine = { path: string; before: string; after: string };
-
-/** Executes `diffSemantic` to diff semantic in `agent-cassette`. */
 export function diffSemantic(before: unknown, after: unknown, nCtx = 4096): DriftLine[] {
   const maxChars = Math.max(200, Math.floor(nCtx * 0.5));
   const b = canonicalizeJson(before, true);
@@ -67,8 +55,6 @@ export function diffSemantic(before: unknown, after: unknown, nCtx = 4096): Drif
   }
   return [{ path: "$", before: b, after: a }];
 }
-
-/** Executes `anchorToolsAtTail` to anchor tools at tail in `agent-cassette`. */
 export function anchorToolsAtTail(prompt: string, toolSig: string): string {
   const marker = "ASSISTANT:";
   const idx = prompt.lastIndexOf(marker);

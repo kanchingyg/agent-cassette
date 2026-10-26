@@ -1,28 +1,29 @@
+/**
+ * MCP stdio server, agent guardrails, and programmatic VCR helpers for agent-cassette.
+ *
+ * @example
+ * ```ts
+ * import { loadCassette, recordAgentRun } from "jsr:@kanchingyg/agent-cassette/bridge";
+ * ```
+ */
 import { createHash } from "node:crypto";
 import { canonicalizeJson, diffSemantic } from "./prompt-hasher.js";
 import { loadCassette, recordAgentRun, replayAgentRun } from "./http-vcr-proxy.js";
 export { canonicalizeJson, headTailTruncate, diffSemantic, anchorToolsAtTail, hashPrompt, redactSecrets, } from "./prompt-hasher.js";
 import { headTailTruncate, redactSecrets } from "./prompt-hasher.js";
-/** Constant `DEFAULT_N_CTX` defining default n ctx. */
 export const DEFAULT_N_CTX = 4096;
-/** Constant `KNOWN_DIMENSIONS` defining known dimensions. */
 export const KNOWN_DIMENSIONS = [384, 768, 1024, 1536, 2560, 3072, 4096];
-
-/** Executes `toolOutputBudgetChars` to tool output budget chars in `agent-cassette`. */
 export function toolOutputBudgetChars(nCtx: number, charsPerToken = 4): number {
     return Math.floor(nCtx * charsPerToken * 0.3);
 }
-/** Executes `truncateToolOutput` to truncate tool output in `agent-cassette`. */
 export function truncateToolOutput(text: string, nCtx?: number): string {
     return headTailTruncate(String(text), toolOutputBudgetChars(nCtx ?? DEFAULT_N_CTX));
 }
-/** Executes `finalizeMcpToolText` to finalize mcp tool text in `agent-cassette`. */
 export function finalizeMcpToolText(text: string, opts?: { nCtx?: number; toWsl?: boolean }): string {
     const nCtx = opts?.nCtx ?? DEFAULT_N_CTX;
     const toWsl = opts?.toWsl ?? false;
     return String(normalizePathsDeep(redactSecrets(truncateToolOutput(String(text), nCtx)), !toWsl));
 }
-/** Executes `l2Normalize` to l2 normalize in `agent-cassette`. */
 export function l2Normalize(vec: number[]): number[] {
     let sum = 0;
     for (const v of vec)
@@ -30,18 +31,15 @@ export function l2Normalize(vec: number[]): number[] {
     const norm = Math.sqrt(sum) || 1;
     return vec.map((v) => v / norm);
 }
-/** Executes `mrlSlice` to mrl slice in `agent-cassette`. */
 export function mrlSlice(vec: number[], dimensions: number): number[] {
     return l2Normalize(vec.slice(0, dimensions));
 }
-/** Executes `floatArrayToBase64` to float array to base64 in `agent-cassette`. */
 export function floatArrayToBase64(vec: number[]): string {
     const buf = Buffer.alloc(vec.length * 4);
     for (let i = 0; i < vec.length; i++)
         buf.writeFloatLE(vec[i], i * 4);
     return buf.toString("base64");
 }
-/** Executes `base64ToFloatArray` to base64 to float array in `agent-cassette`. */
 export function base64ToFloatArray(b64: string): number[] {
     const buf = Buffer.from(b64, "base64");
     const out = [];
@@ -49,7 +47,6 @@ export function base64ToFloatArray(b64: string): number[] {
         out.push(buf.readFloatLE(i));
     return out;
 }
-/** Executes `assertDimensionFingerprint` to assert dimension fingerprint in `agent-cassette`. */
 export function assertDimensionFingerprint(lock: { dimension: number } | null | undefined, dim: number): void {
     if (!lock)
         return;
@@ -63,13 +60,10 @@ function chunkArray<T>(arr: T[], size: number): T[][] {
         out.push(arr.slice(i, i + size));
     return out;
 }
-/** Configuration and data shape for `EmbedUpstream` (embed upstream). */
 export type EmbedUpstream = {
     maxBatch: number;
     embed: (texts: string[], model: string, dimensions?: number) => Promise<number[][]>;
 };
-
-/** Executes `normalizeEmbedBatch` to normalize embed batch in `agent-cassette`. */
 export async function normalizeEmbedBatch(
     inputs: string[],
     options: {
@@ -109,22 +103,18 @@ export async function normalizeEmbedBatch(
 }
 let allowWrite = false;
 let dryRun = false;
-/** Executes `setGuards` to set guards in `agent-cassette`. */
 export function setGuards(opts: { allowWrite?: boolean; dryRun?: boolean }): void {
     allowWrite = Boolean(opts.allowWrite);
     dryRun = Boolean(opts.dryRun);
 }
-/** Executes `loopBreakerHash` to loop breaker hash in `agent-cassette`. */
 export function loopBreakerHash(toolName: string, args: unknown): string {
     return createHash("sha256").update(`${toolName}:${canonicalizeJson(args)}`).digest("hex");
 }
 const loopState = { lastHash: "", repeatCount: 0 };
-/** Executes `resetLoopBreaker` to reset loop breaker in `agent-cassette`. */
 export function resetLoopBreaker() {
     loopState.lastHash = "";
     loopState.repeatCount = 0;
 }
-/** Executes `checkLoopBreaker` to check loop breaker in `agent-cassette`. */
 export function checkLoopBreaker(toolName: string, args: unknown): string | null {
     const h = loopBreakerHash(toolName, args);
     if (h === loopState.lastHash)
@@ -138,7 +128,6 @@ export function checkLoopBreaker(toolName: string, args: unknown): string | null
     }
     return null;
 }
-/** Configuration and data shape for `McpToolDef` (mcp tool def). */
 export type McpToolDef = {
     name: string;
     description?: string;
@@ -146,8 +135,6 @@ export type McpToolDef = {
     mutates?: boolean;
     annotations?: { destructiveHint?: boolean };
 };
-
-/** Executes `guardMutatingTool` to guard mutating tool in `agent-cassette`. */
 export function guardMutatingTool(tool?: McpToolDef): { blocked: boolean; reason?: string } {
     if (!(tool?.mutates || tool?.annotations?.destructiveHint))
         return { blocked: false };
@@ -160,21 +147,18 @@ export function guardMutatingTool(tool?: McpToolDef): { blocked: boolean; reason
 }
 const WIN_DRIVE_RE = /^([A-Za-z]):\\(.*)$/;
 const WSL_RE = /^\/mnt\/([a-z])\/(.*)$/i;
-/** Executes `windowsToWsl` to windows to wsl in `agent-cassette`. */
 export function windowsToWsl(p: string): string {
     const m = p.match(WIN_DRIVE_RE);
     if (!m)
         return p;
     return `/mnt/${m[1].toLowerCase()}/${m[2].replace(/\\/g, "/")}`;
 }
-/** Executes `wslToWindows` to wsl to windows in `agent-cassette`. */
 export function wslToWindows(p: string): string {
     const m = p.match(WSL_RE);
     if (!m)
         return p;
     return `${m[1].toUpperCase()}:\\${m[2].replace(/\//g, "\\")}`;
 }
-/** Executes `normalizePathsDeep` to normalize paths deep in `agent-cassette`. */
 export function normalizePathsDeep(value: unknown, toWsl: boolean): unknown {
     if (typeof value === "string") {
         if (toWsl && WIN_DRIVE_RE.test(value))
@@ -195,7 +179,6 @@ export function normalizePathsDeep(value: unknown, toWsl: boolean): unknown {
 }
 let jsonRpcWrite: ((line: string) => void) | null = null;
 let stdoutHijacked = false;
-/** Executes `hijackStdoutForMcp` to hijack stdout for mcp in `agent-cassette`. */
 export function hijackStdoutForMcp() {
     if (stdoutHijacked)
         return;
@@ -213,9 +196,7 @@ export function hijackStdoutForMcp() {
     };
     process.stdout.write = hijackedWrite;
 }
-/** Constant `jsonRpcFrameLog` defining json rpc frame log. */
 export const jsonRpcFrameLog: string[] = [];
-/** Executes `writeJsonRpcFrame` to write json rpc frame in `agent-cassette`. */
 export function writeJsonRpcFrame(obj: Record<string, unknown>): void {
     const line = JSON.stringify(obj) + "\n";
     jsonRpcFrameLog.push(line);
@@ -224,22 +205,17 @@ export function writeJsonRpcFrame(obj: Record<string, unknown>): void {
     else
         process.stdout.write(line);
 }
-/** Configuration and data shape for `JsonRpcMessage` (json rpc message). */
 export type JsonRpcMessage = {
     jsonrpc?: string;
     id?: string | number | null;
     method?: string;
     params?: { name?: string; arguments?: Record<string, unknown> };
 };
-
-/** Configuration and data shape for `McpServerOpts` (mcp server opts). */
 export type McpServerOpts = {
     tools?: McpToolDef[];
     handlers?: Record<string, (args: Record<string, unknown>) => Promise<unknown>>;
     pathToWsl?: boolean;
 };
-
-/** Executes `dispatchMcpMessage` to dispatch mcp message in `agent-cassette`. */
 export function dispatchMcpMessage(msg: JsonRpcMessage, opts: McpServerOpts = {}): void {
     const tools = opts.tools ?? defaultTools();
     const handlers = opts.handlers ?? {};
@@ -298,7 +274,7 @@ function handleMessage(
             result: {
                 protocolVersion: "2024-11-05",
                 capabilities: { tools: {} },
-                serverInfo: { name: "agent-cassette", version: "0.1.0" },
+                serverInfo: { name: "agent-cassette", version: "0.1.1" },
             },
         });
         return;
@@ -418,7 +394,6 @@ function builtInHandler(name: string): (args: Record<string, unknown>) => Promis
     }
     return async () => ({ ok: false });
 }
-/** Executes `startMcpServer` to start mcp server in `agent-cassette`. */
 export function startMcpServer(opts: McpServerOpts = {}): void {
     hijackStdoutForMcp();
     const stdin = process.stdin;
@@ -441,22 +416,16 @@ export function startMcpServer(opts: McpServerOpts = {}): void {
         }
     });
 }
-/** Configuration and data shape for `ChatMessage` (chat message). */
 export type ChatMessage = {
     role: string;
     content?: string;
     reasoning_content?: string;
     tool_calls?: unknown[];
 };
-
-/** Configuration and data shape for `ReasoningState` (reasoning state). */
 export type ReasoningState = { inToolLoop: boolean };
-
-/** Executes `createReasoningState` to create reasoning state in `agent-cassette`. */
 export function createReasoningState(): ReasoningState {
     return { inToolLoop: false };
 }
-/** Executes `applyReasoningContentPolicy` to apply reasoning content policy in `agent-cassette`. */
 export function applyReasoningContentPolicy(
     messages: ChatMessage[],
     state: ReasoningState,
@@ -478,11 +447,9 @@ export function applyReasoningContentPolicy(
     }
     return { messages: out, state };
 }
-/** Executes `stripRedactedThinking` to strip redacted thinking in `agent-cassette`. */
 export function stripRedactedThinking(text: string): string {
     return text.replace(/<think>[\s\S]*?<\/redacted_thinking>/g, "").trim();
 }
-/** Executes `parseDirtyToolCall` to parse dirty tool call in `agent-cassette`. */
 export function parseDirtyToolCall(raw: string): { name: string; arguments: Record<string, unknown> } | null {
     const cleaned = stripRedactedThinking(raw);
     const hermes = cleaned.match(/<tool_call>\s*(\{[\s\S]*?\})\s*<\/tool_call>/);
@@ -524,7 +491,6 @@ export function parseDirtyToolCall(raw: string): { name: string; arguments: Reco
     }
     return null;
 }
-/** Executes `sanitizeRequestBody` to sanitize request body in `agent-cassette`. */
 export function sanitizeRequestBody(body: Record<string, unknown>, model: string): Record<string, unknown> {
     const out = { ...body };
     if (String(model).includes("reasoner") || String(model).includes("r1")) {
@@ -533,7 +499,6 @@ export function sanitizeRequestBody(body: Record<string, unknown>, model: string
     }
     return out;
 }
-/** Executes `detectProvider` to detect provider in `agent-cassette`. */
 export function detectProvider(baseUrl: string): string {
     if (baseUrl.includes("dashscope"))
         return "dashscope";
@@ -541,7 +506,6 @@ export function detectProvider(baseUrl: string): string {
         return "deepseek";
     return "openai";
 }
-/** Executes `normalizeToolChoice` to normalize tool choice in `agent-cassette`. */
 export function normalizeToolChoice(choice: string, provider: string): string {
     if (provider === "dashscope" && choice === "required")
         return "auto";

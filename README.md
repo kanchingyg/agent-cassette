@@ -6,10 +6,6 @@
 [![JSR Score](https://jsr.io/badges/@kanchingyg/agent-cassette/score)](https://jsr.io/@kanchingyg/agent-cassette/score)
 [![Runtime](https://img.shields.io/badge/runtime-Node_%7C_Bun_%7C_Deno-f9f1e1)](https://github.com/kanchingyg/agent-cassette)
 [![license](https://img.shields.io/github/license/kanchingyg/agent-cassette)](https://github.com/kanchingyg/agent-cassette/blob/HEAD/LICENSE)
-[![npm](https://img.shields.io/npm/v/agent-cassette)](https://www.npmjs.com/package/@kanchingyg/agent-cassette)
-[![JSR](https://jsr.io/badges/@kanchingyg/agent-cassette)](https://jsr.io/@kanchingyg/agent-cassette)
-[![Bun](https://img.shields.io/badge/runtime-Node_%7C_Bun-f9f1e1)](https://github.com/kanchingyg/agent-cassette)
-[![license](https://img.shields.io/github/license/kanchingyg/agent-cassette)](https://github.com/kanchingyg/agent-cassette/blob/HEAD/LICENSE)
 
 Deterministic VCR cassette recorder and offline replay proxy for LLM HTTP/SSE streams and MCP stdio runs. Replay multi-turn agent tests in ~0ms in CI without GPUs or live API keys.
 
