@@ -1,0 +1,20 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.kanchingyg/agent-cassette",
+  "description": "Deterministic HTTP/SSE VCR for LLM and MCP agent runs with 0ms offline replay in CI",
+  "repository": {
+    "url": "https://github.com/kanchingyg/agent-cassette",
+    "source": "github"
+  },
+  "version": "0.1.1",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "@kanchingyg/agent-cassette",
+      "version": "0.1.1",
+      "transport": {
+        "type": "stdio"
+      }
+    }
+  ]
+}

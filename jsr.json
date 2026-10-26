@@ -1,0 +1,23 @@
+{
+  "name": "@kanchingyg/agent-cassette",
+  "version": "0.1.1",
+  "description": "Deterministic HTTP/SSE VCR for LLM and MCP agent runs (0ms replay in CI)",
+  "license": "MIT",
+  "exports": {
+    ".": "./src/cli.ts",
+    "./bridge": "./src/bridge.ts"
+  },
+  "publish": {
+    "include": [
+      "src/**/*.ts",
+      "LICENSE",
+      "README.md",
+      "SKILL.md",
+      "jsr.json"
+    ],
+    "exclude": [
+      "src/**/*.test.ts",
+      "src/**/*.spec.ts"
+    ]
+  }
+}
